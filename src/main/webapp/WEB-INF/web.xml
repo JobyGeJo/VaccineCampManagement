@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<web-app xmlns="https://jakarta.ee/xml/ns/jakartaee"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="https://jakarta.ee/xml/ns/jakartaee https://jakarta.ee/xml/ns/jakartaee/web-app_6_0.xsd"
+         version="6.0">
+
+<!--     Camps Filter -->
+    <filter>
+        <filter-name>MyFilter</filter-name>
+        <filter-class>org.myapplication.filters.ValidationFilter</filter-class>
+    </filter>
+
+    <filter-mapping>
+        <filter-name>MyFilter</filter-name>
+        <url-pattern>/v1/*</url-pattern>
+    </filter-mapping>
+
+    <servlet>
+        <servlet-name>dispatcher-servlet</servlet-name>
+        <servlet-class>org.myapplication.servlets.DispatcherServlet</servlet-class>
+    </servlet>
+
+    <servlet-mapping>
+        <servlet-name>dispatcher-servlet</servlet-name>
+        <url-pattern>/v1/*</url-pattern>
+    </servlet-mapping>
+
+    <!-- Error Handling Servlet -->
+    <servlet>
+        <servlet-name>error-handler</servlet-name>
+        <servlet-class>org.myapplication.servlets.ErrorHandlingServlet</servlet-class>
+    </servlet>
+
+    <servlet-mapping>
+        <servlet-name>error-handler</servlet-name>
+        <url-pattern>/error-handler</url-pattern>
+    </servlet-mapping>
+
+    <!-- Session Configuration -->
+    <session-config>
+        <cookie-config>
+            <name>JSESSIONID</name>
+            <max-age>31536000</max-age> <!-- 1 Year in seconds -->
+        </cookie-config>
+    </session-config>
+
+    <!-- Error Pages -->
+    <error-page>
+        <error-code>404</error-code>
+        <location>/error-handler</location>
+    </error-page>
+    <error-page>
+        <error-code>500</error-code>
+        <location>/error-handler</location>
+    </error-page>
+    <error-page>
+        <exception-type>java.lang.Exception</exception-type>
+        <location>/error-handler</location>
+    </error-page>
+
+</web-app>
