@@ -2,14 +2,15 @@ package org.myapplication.controllers;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import org.myapplication.exceptions.DataBaseException;
 import org.myapplication.exceptions.InvalidRequestException;
 import org.myapplication.models.JsonModel;
 import org.myapplication.modules.VaccineModule;
+import org.myapplication.utils.ReflectiveUse;
 import org.myapplication.utils.ResponseGenerator;
 
 import java.io.IOException;
 
+@ReflectiveUse
 public class VaccinesController implements Controller {
 
     public void POST(HttpServletRequest request, HttpServletResponse response) throws IOException {

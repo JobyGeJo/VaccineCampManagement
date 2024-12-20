@@ -7,16 +7,17 @@ import org.myapplication.exceptions.InvalidRequestException;
 import org.myapplication.models.CampModel;
 import org.myapplication.models.JsonModel;
 import org.myapplication.modules.CampModule;
+import org.myapplication.utils.ReflectiveUse;
 import org.myapplication.utils.ResponseGenerator;
 
 import java.io.IOException;
 import java.util.Arrays;
 
+@ReflectiveUse
 public class CampsController implements Controller {
 
     public void POST(HttpServletRequest request, HttpServletResponse response) throws IOException {
         JsonModel jsonModel = new JsonModel(request.getReader());
-        String[] paths = request.getPathInfo().split("/");
         ResponseGenerator responseGenerator = new ResponseGenerator(response);
 
         CampModel campModel = new CampModel();
@@ -35,7 +36,6 @@ public class CampsController implements Controller {
     }
 
     public void GET(HttpServletRequest request, HttpServletResponse response) throws IOException {
-        String[] paths = request.getPathInfo().split("/");
         ResponseGenerator responseGenerator = new ResponseGenerator(response);
 
         responseGenerator.Success("Data Fetched", Arrays.toString(CampModule.getCamps()));

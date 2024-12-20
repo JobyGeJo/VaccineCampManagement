@@ -6,12 +6,14 @@ import org.myapplication.exceptions.DataBaseException;
 import org.myapplication.exceptions.InvalidRequestException;
 import org.myapplication.models.JsonModel;
 import org.myapplication.models.UserModel;
+import org.myapplication.utils.ReflectiveUse;
 import org.myapplication.utils.ResponseGenerator;
 import org.myapplication.modules.UserModule;
 import java.io.IOException;
 import java.nio.file.AccessDeniedException;
 import java.util.Arrays;
 
+@ReflectiveUse
 public class UsersController implements Controller {
 
     public void GET(HttpServletRequest request, HttpServletResponse response) throws IOException {

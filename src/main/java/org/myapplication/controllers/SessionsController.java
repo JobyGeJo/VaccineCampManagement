@@ -9,16 +9,16 @@ import org.myapplication.exceptions.InvalidRequestException;
 import org.myapplication.modules.UserModule;
 import org.myapplication.models.UserModel;
 import org.myapplication.models.JsonModel;
-import org.myapplication.utils.ColoredOutput;
+import org.myapplication.utils.ReflectiveUse;
 import org.myapplication.utils.ResponseGenerator;
 
 import java.io.IOException;
 
+@ReflectiveUse
 public class SessionsController implements Controller {
 
     public void POST(HttpServletRequest request, HttpServletResponse response) throws IOException {
         JsonModel jsonModel = new JsonModel(request.getReader());
-        String[] paths = request.getPathInfo().split("/");
         ResponseGenerator responseGenerator = new ResponseGenerator(response);
 
         try {
@@ -39,7 +39,6 @@ public class SessionsController implements Controller {
     }
 
     public void GET(HttpServletRequest request, HttpServletResponse response) throws IOException {
-        String[] paths = request.getPathInfo().split("/");
         ResponseGenerator responseGenerator = new ResponseGenerator(response);
 
         try {
@@ -53,7 +52,6 @@ public class SessionsController implements Controller {
     }
 
     public void DELETE(HttpServletRequest request, HttpServletResponse response) throws IOException {
-        String[] paths = request.getPathInfo().split("/");
         ResponseGenerator responseGenerator = new ResponseGenerator(response);
 
         request.getSession().invalidate();
