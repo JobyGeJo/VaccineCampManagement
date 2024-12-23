@@ -1,8 +1,7 @@
 package org.myapplication.database;
 
-import org.myapplication.enumerate.Status;
 import org.myapplication.exceptions.QueryException;
-import org.myapplication.utils.ColoredOutput;
+import org.myapplication.tools.ColoredOutput;
 
 public class QueryBuilder {
     private final StringBuilder query;

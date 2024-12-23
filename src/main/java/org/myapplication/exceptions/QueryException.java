@@ -1,6 +1,6 @@
 package org.myapplication.exceptions;
 
-import org.myapplication.utils.ColoredOutput;
+import org.myapplication.tools.ColoredOutput;
 
 public class QueryException extends RuntimeException {
     public QueryException(String message) {

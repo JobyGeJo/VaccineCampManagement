@@ -1,4 +1,4 @@
-package org.myapplication.utils;
+package org.myapplication.tools;
 
 import java.lang.reflect.InvocationTargetException;
 import java.util.logging.Logger;

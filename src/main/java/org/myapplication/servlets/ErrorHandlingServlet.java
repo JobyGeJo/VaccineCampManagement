@@ -4,10 +4,9 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import org.myapplication.utils.ResponseGenerator;
+import org.myapplication.tools.ResponseGenerator;
 
 import java.io.IOException;
-import java.io.PrintWriter;
 
 public class ErrorHandlingServlet extends HttpServlet {
 

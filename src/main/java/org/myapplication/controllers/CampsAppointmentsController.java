@@ -4,8 +4,8 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.myapplication.exceptions.InvalidRequestException;
 import org.myapplication.modules.AppointmentModule;
-import org.myapplication.utils.ReflectiveUse;
-import org.myapplication.utils.ResponseGenerator;
+import org.myapplication.tools.ReflectiveUse;
+import org.myapplication.tools.ResponseGenerator;
 
 import java.io.IOException;
 import java.sql.Date;

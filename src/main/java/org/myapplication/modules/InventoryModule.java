@@ -186,6 +186,7 @@ public class InventoryModule {
 
     public static void addStock(int campId, int vaccineId, int stock, String date) {
         try {
+            if (stock == 0) { stock = 30; }
             addStock(campId, vaccineId, stock, Date.valueOf(date));
         } catch (IllegalArgumentException e) {
             throw new InvalidRequestException(e.getMessage());

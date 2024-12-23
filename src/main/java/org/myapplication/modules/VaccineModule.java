@@ -11,7 +11,7 @@ import org.myapplication.exceptions.InvalidRequestException;
 import org.myapplication.models.AppointmentModel;
 import org.myapplication.models.UserModel;
 import org.myapplication.models.VaccineModel;
-import org.myapplication.utils.CertificateGenerator;
+import org.myapplication.tools.CertificateGenerator;
 
 import java.io.IOException;
 import java.sql.ResultSet;
@@ -40,6 +40,14 @@ public class VaccineModule {
             throw new InvalidRequestException(e.getMessage());
         }
 
+    }
+
+    public static VaccineModel getVaccineDetails(int userId, int vaccineId) {
+        try (DataBaseConnection db = new DataBaseConnection()) {
+            return getVaccineDetails(userId, vaccineId, db);
+        } catch (DataBaseException | SQLException e) {
+            throw new InvalidRequestException(e.getMessage());
+        }
     }
 
     public static VaccineModel getVaccineDetails(int userId, int vaccineId, DataBaseConnection db) throws DataBaseException, SQLException {
@@ -123,6 +131,10 @@ public class VaccineModule {
             throw new InvalidRequestException(e.getMessage());
         }
 
+    }
+
+    public static void main(String[] args) {
+        System.out.println(getVaccineDetails(1, 1));
     }
 
 }

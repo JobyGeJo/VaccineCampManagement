@@ -1,4 +1,4 @@
-package org.myapplication.utils;
+package org.myapplication.tools;
 
 import org.myapplication.exceptions.InvalidRequestException;
 

@@ -2,7 +2,7 @@ package org.myapplication.servlets;
 
 import jakarta.servlet.*;
 import jakarta.servlet.http.*;
-import org.myapplication.utils.ResponseGenerator;
+import org.myapplication.tools.ResponseGenerator;
 
 import java.io.*;
 import java.lang.reflect.*;
@@ -15,7 +15,7 @@ public class DispatcherServlet extends HttpServlet {
 
     private void handleRequest(HttpServletRequest request, HttpServletResponse response, String httpMethod) throws IOException {
         String pathInfo = request.getPathInfo();
-        String[] parts = pathInfo.split("/"); //['', 'users', '2', 'appointments]
+        String[] parts = pathInfo.split("/");
 
         if (parts.length < 2) {
             response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Invalid path");
