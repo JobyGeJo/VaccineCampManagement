@@ -28,8 +28,10 @@ public class CampsController implements Controller {
             campModel.setEndDate((String) jsonModel.get("end_date", false));
 
             CampModule.registerCamp(campModel);
+            JsonModel data = new JsonModel();
+            data.set("camp_id", campModel.getCampId());
 
-            responseGenerator.Success("Registration Successful", campModel.getCampId());
+            responseGenerator.Success("Registration Successful", data);
         } catch (InvalidRequestException e) {
             responseGenerator.ExpectationFailed(e.getMessage());
         }

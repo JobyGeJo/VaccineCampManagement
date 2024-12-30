@@ -16,7 +16,7 @@ public class SuppliesController implements Controller {
     @Override
     public void POST(HttpServletRequest request, HttpServletResponse response) throws IOException {
         ResponseGenerator responseGenerator = new ResponseGenerator(response);
-        JsonModel jsonModel = new JsonModel(request.getReader());
+        JsonModel jsonModel = new JsonModel(request.getReader().toString());
 
         try {
             InventoryModule.addStock(

@@ -1,15 +1,14 @@
-package org.myapplication.servlets;
+//package org.myapplication.servlets;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
+import jakarta.servlet.ServletException;
 import jakarta.servlet.http.*;
 import org.junit.jupiter.api.*;
 import org.mockito.*;
+import org.myapplication.servlets.DispatcherServlet;
 
-import java.io.BufferedReader;
-import java.io.PrintWriter;
-import java.io.StringReader;
-import java.io.StringWriter;
+import java.io.*;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
@@ -21,21 +20,27 @@ class ServiceTest {
     private HttpServletResponse response;
     private HttpSession session;
 
+    private StringWriter stringWriter;
+    private PrintWriter printWriter;
+
     @BeforeEach
     void setUp() {
         servlet = new DispatcherServlet();
         request = mock(HttpServletRequest.class);
         response = mock(HttpServletResponse.class);
         session = mock(HttpSession.class);
+
+        stringWriter = new StringWriter();
+        printWriter = new PrintWriter(stringWriter);
     }
 
-    @Test
-    void testDoPost_ReturnsCorrectJsonResponse() throws Exception {
-        // Mock JSON input
-        String jsonInput = "{\"user_name\": \"joby\", \"password\": \"12345678\"}";
+    void setUpSession(String method, String endPoint) throws IOException {
+        setUpRequest(method, endPoint, "{}");
+    }
 
-        // Mock request and response
-        BufferedReader bufferedReader = new BufferedReader(new StringReader(jsonInput));
+    void setUpRequest(String method, String endPoint, String payload) throws IOException {
+
+        BufferedReader bufferedReader = new BufferedReader(new StringReader(payload));
         when(request.getReader()).thenReturn(bufferedReader);
 
         StringWriter stringWriter = new StringWriter();
@@ -43,9 +48,18 @@ class ServiceTest {
         when(response.getWriter()).thenReturn(printWriter);
 
         // Simulate POST request
-        when(request.getMethod()).thenReturn("POST");
-        when(request.getPathInfo()).thenReturn("/sessions");
+        when(request.getMethod()).thenReturn(method);
+        when(request.getPathInfo()).thenReturn(endPoint);
         when(request.getSession()).thenReturn(session);
+    }
+
+    @Test
+    void testDoPost_ReturnsCorrectJsonResponse() throws IOException, ServletException {
+        setUpRequest(
+                "POST",
+                "/sessions",
+                "{\"user_name\": \"joby\", \"password\": \"12345678\"}"
+        );
 
         // Call the service method
         servlet.service(request, response);
