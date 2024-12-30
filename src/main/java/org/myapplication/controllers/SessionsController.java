@@ -9,8 +9,8 @@ import org.myapplication.exceptions.InvalidRequestException;
 import org.myapplication.modules.UserModule;
 import org.myapplication.models.UserModel;
 import org.myapplication.models.JsonModel;
-import org.myapplication.utils.ReflectiveUse;
-import org.myapplication.utils.ResponseGenerator;
+import org.myapplication.tools.ReflectiveUse;
+import org.myapplication.tools.ResponseGenerator;
 
 import java.io.IOException;
 

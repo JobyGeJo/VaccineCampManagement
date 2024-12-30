@@ -7,8 +7,8 @@ import org.myapplication.exceptions.InvalidRequestException;
 import org.myapplication.models.AppointmentModel;
 import org.myapplication.models.JsonModel;
 import org.myapplication.modules.AppointmentModule;
-import org.myapplication.utils.ReflectiveUse;
-import org.myapplication.utils.ResponseGenerator;
+import org.myapplication.tools.ReflectiveUse;
+import org.myapplication.tools.ResponseGenerator;
 
 import java.io.IOException;
 import java.util.Arrays;

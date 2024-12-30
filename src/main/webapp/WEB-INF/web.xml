@@ -24,6 +24,16 @@
         <servlet-name>dispatcher-servlet</servlet-name>
         <url-pattern>/v1/*</url-pattern>
     </servlet-mapping>
+    
+    <servlet>
+        <servlet-name>utils-servlet</servlet-name>
+        <servlet-class>org.myapplication.servlets.UtilsServlet</servlet-class>
+    </servlet>
+    
+    <servlet-mapping>
+        <servlet-name>utils-servlet</servlet-name>
+        <url-pattern>/utils/*</url-pattern>
+    </servlet-mapping>
 
     <!-- Error Handling Servlet -->
     <servlet>

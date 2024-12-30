@@ -5,7 +5,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 import org.myapplication.enumerate.Role;
-import org.myapplication.utils.ResponseGenerator;
+import org.myapplication.tools.ResponseGenerator;
 
 import java.io.IOException;
 import java.util.logging.Logger;

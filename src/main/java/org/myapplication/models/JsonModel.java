@@ -42,12 +42,37 @@ public class JsonModel {
         return jsonObject.toString();
     }
 
+    /**
+     * Retrieves the value associated with the specified key from the underlying JSON object.
+     * The method supports multiple types (e.g., number, boolean, string) and returns
+     * the corresponding Java object type based on the value in the JSON.
+     *
+     * <p>
+     * If the value is {@code null} and an exception will be thrown.
+     * </p>
+     *
+     * @param key the key to retrieve the value for.
+     * @return the value as an {@code Object}, which could be an {@code Integer}, {@code Boolean},
+     *         {@code String}, or a {@code JsonObject}.
+     * @throws InvalidRequestException if the key is not found or the value is {@code null} and
+     *         {@code rejectNull} is {@code true}.
+     */
     public Object get(String key) {
         return this.get(key, true);
     }
 
+    /**
+     * Retrieves the value associated with the specified key from the underlying JSON object.
+     * Allows control over whether {@code null} values are rejected.
+     *
+     * @param key        the key to retrieve the value for.
+     * @param rejectNull if {@code true}, throws an exception if the value is {@code null}.
+     * @return the value as an {@code Object}, which could be an {@code Integer}, {@code Boolean},
+     *         {@code String}, or a {@code JsonObject}.
+     * @throws InvalidRequestException if the key is not found or the value is {@code null} and
+     *         {@code rejectNull} is {@code true}.
+     */
     public Object get(String key, boolean rejectNull) {
-
         JsonElement jsonElement = jsonObject.get(key);
 
         if (jsonElement == null || jsonElement.isJsonNull()) {
@@ -63,7 +88,6 @@ public class JsonModel {
         }
 
         return jsonElement.getAsJsonObject();
-
     }
 
     public String[] getKeys() {
@@ -106,6 +130,5 @@ public class JsonModel {
         userModel.setDateOfBirth((String) this.get("date_of_birth", false));
 
         return userModel;
-
     }
 }

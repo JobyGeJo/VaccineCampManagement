@@ -1,7 +1,6 @@
 package org.myapplication.database;
 
-import org.myapplication.utils.ColoredOutput;
-import org.myapplication.database.QueryBuilder;
+import org.myapplication.tools.ColoredOutput;
 import org.myapplication.exceptions.DataBaseException;
 
 import java.sql.*;

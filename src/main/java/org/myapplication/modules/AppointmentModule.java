@@ -103,7 +103,7 @@ public class AppointmentModule {
             }
 
             if (InventoryModule.getAvaiableStock(campId, vaccineId, db) <= 0) {
-                throw new InvalidRequestException("Stock available");
+                throw new InvalidRequestException("Stock not available");
             };
 
             db.setQuery(

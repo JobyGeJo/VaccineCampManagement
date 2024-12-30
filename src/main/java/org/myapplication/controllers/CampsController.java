@@ -7,8 +7,8 @@ import org.myapplication.exceptions.InvalidRequestException;
 import org.myapplication.models.CampModel;
 import org.myapplication.models.JsonModel;
 import org.myapplication.modules.CampModule;
-import org.myapplication.utils.ReflectiveUse;
-import org.myapplication.utils.ResponseGenerator;
+import org.myapplication.tools.ReflectiveUse;
+import org.myapplication.tools.ResponseGenerator;
 
 import java.io.IOException;
 import java.util.Arrays;
@@ -28,8 +28,10 @@ public class CampsController implements Controller {
             campModel.setEndDate((String) jsonModel.get("end_date", false));
 
             CampModule.registerCamp(campModel);
+            JsonModel data = new JsonModel();
+            data.set("camp_id", campModel.getCampId());
 
-            responseGenerator.Success("Registration Successful", campModel.getCampId());
+            responseGenerator.Success("Registration Successful", data);
         } catch (InvalidRequestException e) {
             responseGenerator.ExpectationFailed(e.getMessage());
         }

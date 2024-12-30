@@ -1,0 +1,54 @@
+default_values: &admin_session
+  userId: 1
+  role: "Owner"
+
+tests:
+  - name: "Logout API"
+    method: "DELETE"
+    endpoint: "/sessions"
+    session_attributes:
+      userId: 1
+    expected_response:
+      status: 200
+
+  - name: "Test login API"
+    method: "POST"
+    endpoint: "/sessions"
+    payload:
+      user_name: "joby"
+      password: "12345678"
+    expected_response:
+      status: 200
+      validate:
+        user_id:
+          type: "number"
+          value: 1
+        user_name:
+          type: "string"
+          value: "joby"
+        full_name:
+          type: "string"
+        date_of_birth:
+          type: "date"
+
+  - name: "Get Session API"
+    method: "GET"
+    endpoint: "/sessions"
+    session_attributes:
+      <<: *admin_session
+    expected_response:
+      status: 200
+      validate:
+        user_id:
+          type: "number"
+        user_name:
+          type: "string"
+        full_name:
+          type: "string"
+        aadhar_number:
+          type: "string"
+          regex: "^[0-9]{12}$"
+        date_of_birth:
+          type: "date"
+
+#  - name: "Get Camp details"

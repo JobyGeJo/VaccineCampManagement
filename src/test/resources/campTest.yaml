@@ -1,0 +1,84 @@
+admin_session: &admin_session
+  userId: 1
+  role: "Owner"
+
+user_session: &user_session
+  userId: 2
+
+tests:
+  - name: "Register camp (non admin)"
+    method: "POST"
+    endpoint: "/camps"
+    session_attributes:
+      <<: *user_session
+    payload:
+      location: "Hyderabad"
+      start_date: "2024-12-31"
+      end_date: "2024-12-31"
+    expected_response:
+      status: 417
+
+  - name: "Register camp"
+    method: "POST"
+    endpoint: "/camps"
+    session_attributes:
+      <<: *admin_session
+    payload:
+        location: "Hyderabad"
+        start_date: "2024-12-31"
+    expected_response:
+      status: 200
+      validate:
+        camp_id:
+          type: "number"
+
+  - name: "Register camp (duplicate)"
+    method: "POST"
+    endpoint: "/camps"
+    session_attributes:
+      <<: *admin_session
+    payload:
+      location: "Hyderabad"
+      start_date: "2024-12-31"
+      end_date: "2024-12-31"
+    expected_response:
+      status: 417
+
+  - name: "fetch camps"
+    method: "GET"
+    endpoint: "/camps"
+    session_attributes:
+      user_id: 2
+    expected_response:
+      status: 200
+      validate:
+        camp_id:
+          type: "number"
+        location:
+          type: "string"
+          regex: "^[a-z]{3,30}$"
+        start_date:
+          type: "date"
+        total_stock:
+          type: "number"
+        appointment_count:
+          type: "number"
+
+  - name: "get camp appointments"
+    method: "GET"
+    endpoint: "/camps/2/appointments"
+    expected_response:
+      status: 200
+      validate:
+        appointment_id:
+          type: "number"
+        location:
+          type: "string"
+        date:
+          type: "date"
+        full_name:
+          type: "string"
+        aadhar_number:
+          type: "string"
+          regex: "^[0-9]{12}$"
+

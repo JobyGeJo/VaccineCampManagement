@@ -1,7 +1,5 @@
 package org.myapplication.exceptions;
 
-import org.myapplication.utils.ColoredOutput;
-
 import java.sql.SQLException;
 
 // Custom Exception class to handle database-related errors

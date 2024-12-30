@@ -8,7 +8,7 @@ import org.myapplication.exceptions.DataBaseException;
 import org.myapplication.exceptions.InvalidRequestException;
 import org.myapplication.models.JsonModel;
 import org.myapplication.models.UserModel;
-import org.myapplication.utils.Hashing;
+import org.myapplication.tools.Hashing;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
