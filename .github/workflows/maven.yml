@@ -16,19 +16,29 @@ on:
 
 jobs:
   build:
-
     runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+      actions: read
+      dependency-graph: write # Add required permission for dependency graph submission
 
     steps:
     - uses: actions/checkout@v4
+
     - name: Set up JDK 17
       uses: actions/setup-java@v4
       with:
         java-version: '17'
         distribution: 'temurin'
         cache: maven
+
     - name: Build with Maven
       run: mvn -B package --file pom.xml
+
+    # Optional: Upload the full dependency graph to GitHub to improve the quality of Dependabot alerts this repository can receive
+    - name: Update dependency graph
+      uses: advanced-security/maven-dependency-submission-action@v2 # Updated to the latest stable version
 
     # Optional: Uploads the full dependency graph to GitHub to improve the quality of Dependabot alerts this repository can receive
     - name: Update dependency graph
