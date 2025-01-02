@@ -28,7 +28,7 @@ public abstract class BaseServiceTest {
         responseWriter = new StringWriter();
     }
 
-    protected void setUpRequest(HttpServletRequest request, HttpServletResponse response, String method, String endpoint, String payload) throws Exception {
+    protected void setUpRequest(String method, String endpoint, String payload, Map<String, Object> queryParams) throws Exception {
         when(request.getMethod()).thenReturn(method);
         when(request.getPathInfo()).thenReturn(endpoint);
         if (payload != null) {
@@ -37,6 +37,14 @@ public abstract class BaseServiceTest {
 
         PrintWriter writer = new PrintWriter(responseWriter);
         when(response.getWriter()).thenReturn(writer);
+
+        if (queryParams == null) {
+            return;
+        }
+
+        for (Map.Entry<String, Object> entry : queryParams.entrySet()) {
+            when(request.getParameter(entry.getKey())).thenReturn((String) entry.getValue());
+        }
     }
 
     protected void setUpSession(Map<String, Object> sessionAttributes) {

@@ -188,6 +188,12 @@ public class QueryBuilder {
         return this;
     }
 
+    public QueryBuilder orderby(String column, boolean reverse) {
+        orderby(column);
+        query.append(reverse ? "DESC " : "ASC ");
+        return this;
+    }
+
     public QueryBuilder orderby(String column) {
         query.append("ORDER BY ").append(column).append(" ");
         return this;

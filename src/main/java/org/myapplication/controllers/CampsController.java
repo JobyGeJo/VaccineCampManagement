@@ -40,7 +40,32 @@ public class CampsController implements Controller {
     public void GET(HttpServletRequest request, HttpServletResponse response) throws IOException {
         ResponseGenerator responseGenerator = new ResponseGenerator(response);
 
-        responseGenerator.Success("Data Fetched", Arrays.toString(CampModule.getCamps()));
+        String sortBy = request.getParameter("sortBy");
+        String reverseParam = request.getParameter("reverse");
+        String contains = request.getParameter("name_contains");
+
+        try {
+            if (reverseParam != null && !(reverseParam.equalsIgnoreCase("true") || reverseParam.equalsIgnoreCase("false"))) {
+                throw new InvalidRequestException("Invalid value for 'reverse'. Allowed values are 'true' or 'false'.");
+            }
+            boolean reverse = Boolean.parseBoolean(reverseParam);
+
+            if (contains != null) {
+                responseGenerator.Success(
+                        "Data Fetched",
+                        Arrays.toString(CampModule.getCamps(contains, sortBy, reverse))
+                );
+            } else {
+                responseGenerator.Success(
+                        "Data Fetched",
+                        Arrays.toString(CampModule.getCamps(sortBy, reverse))
+                );
+            }
+
+        } catch (InvalidRequestException e) {
+            responseGenerator.ExpectationFailed(e.getMessage());
+        }
+
     }
 
     public void PUT(HttpServletRequest request, HttpServletResponse response) throws IOException {

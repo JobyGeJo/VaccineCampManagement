@@ -7,16 +7,45 @@ import org.myapplication.enumerate.Status;
 import org.myapplication.exceptions.DataBaseException;
 import org.myapplication.exceptions.InvalidRequestException;
 import org.myapplication.models.CampModel;
-import org.myapplication.models.VaccineModel;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.ArrayList;
+import java.util.Arrays;
 
 public class CampModule {
+
+    public enum Column {
+        CAMP_ID("camp_id"),
+        LOCATION("location"),
+        START_DATE("start_date"),
+        END_DATE("end_date"),;
+
+        private final String displayName;
+
+        Column(String displayName) {
+            String tableName = "camps";
+            this.displayName = String.format("%s.%s", tableName, displayName);
+        }
+
+        public static Column fromString(String columnName) {
+            if (columnName == null || columnName.equals("null")) {
+                return CAMP_ID;
+            }
+            for (Column column : Column.values()) {
+                if (column.name().equalsIgnoreCase(columnName)) {
+                    return column;
+                }
+            }
+            throw new IllegalArgumentException("No enum constant for " + columnName);
+        }
+
+        @Override
+        public String toString() {
+            return displayName;
+        }
+    }
 
     public static void registerCamp(CampModel camp) {
         try (DataBaseConnection db = new DataBaseConnection()) {
@@ -51,31 +80,108 @@ public class CampModule {
         }
     }
 
-    public static CampModel[] getCamps() {
+    public static CampModel[] getCamps(String sortBy, boolean reverse) {
+        try {
+            return getCamps(Column.fromString(sortBy), reverse);
+        } catch (IllegalArgumentException e) {
+            throw new InvalidRequestException(String.format("Invalid column name %s", sortBy));
+        }
+    }
+
+    public static CampModel[] getCamps(Column sortBy, boolean reverse) {
+
         ArrayList<CampModel> camps = new ArrayList<>();
 
         try (DataBaseConnection db = new DataBaseConnection()) {
+            db.setQuery(
+                    new QueryBuilder()
+                            .select(
+                                    "camps",
+                                    "camps.*",
+                                    "COALESCE(inv.total_stock, 0) AS stock",
+                                    "COUNT(appointments.appointment_id) AS count"
+                            ).write("LEFT JOIN ")
+                            .openGroup()
+                            .select("inventory", "camp_id", "SUM(stock) AS total_stock")
+                            .where("expiry_date >= CURRENT_DATE")
+                            .groupby("camp_id")
+                            .closeGroup("inv")
+                            .write("ON inv.camp_id = camps.camp_id ")
+                            .leftJoin("appointments",
+                                    "appointments.camp_id = camps.camp_id",
+                                    "appointments.date_of_vaccination = CURRENT_DATE",
+                                    "appointments.status != ?"
+                            ).groupby("camps.camp_id", "inv.total_stock")
+                            .orderby(sortBy.toString(), reverse),
 
-            db.setQuery(new QueryBuilder()
-                    .write("SELECT\n" +
-                            "    camps.*,\n" +
-                            "    COALESCE(inv.total_stock, 0) AS stock,\n" +
-                            "    COUNT(appointments.appointment_id) AS count\n" +
-                            "FROM safedose_v2.camps\n" +
-                            "         LEFT JOIN (\n" +
-                            "    SELECT\n" +
-                            "        camp_id,\n" +
-                            "        SUM(stock) AS total_stock\n" +
-                            "    FROM safedose_v2.inventory\n" +
-                            "    WHERE expiry_date >= CURRENT_DATE\n" +
-                            "    GROUP BY camp_id\n" +
-                            ") inv ON inv.camp_id = camps.camp_id\n" +
-                            "         LEFT JOIN safedose_v2.appointments\n" +
-                            "                   ON appointments.camp_id = camps.camp_id\n" +
-                            "                       AND appointments.date_of_vaccination = CURRENT_DATE\n" +
-                            "                       AND appointments.status != 'Cancelled'\n" +
-                            "GROUP BY camps.camp_id, inv.total_stock\n" +
-                            "ORDER BY camps.camp_id;")
+                    Status.CANCELLED
+            );
+
+            try (ResultSet rs = db.executeQuery()) {
+
+                while (rs.next()) {
+                    CampModel camp = new CampModel();
+
+                    camp.setCampId(rs.getInt("camp_id"));
+                    camp.setLocation(rs.getString("location"));
+                    camp.setStartDate(rs.getDate("start_date"));
+                    camp.setEndDate(rs.getDate("end_date"));
+
+                    camp.setTotolStock(rs.getInt("stock"));
+                    camp.setAppointmentCount(rs.getInt("count"));
+
+                    camps.add(camp);
+                }
+
+            }
+
+            return camps.toArray(new CampModel[0]);
+
+        } catch (SQLException | DataBaseException e) {
+            System.out.println(e.getMessage());
+            return null;
+        }
+    }
+
+    public static CampModel[] getCamps(String contains) {
+        return getCamps(contains, Column.CAMP_ID, false);
+    }
+
+    public static CampModel[] getCamps(String contains, String sortBy, boolean reverse) {
+        return getCamps(contains, Column.fromString(sortBy), false);
+    }
+
+    public static CampModel[] getCamps(String contains, Column sortBy, boolean reverse) {
+        contains = contains.toLowerCase();
+        ArrayList<CampModel> camps = new ArrayList<>();
+
+        try (DataBaseConnection db = new DataBaseConnection()) {
+            db.setQuery(
+                    new QueryBuilder()
+                            .select(
+                                    "camps",
+                                    "camps.*",
+                                    "COALESCE(inv.total_stock, 0) AS stock",
+                                    "COUNT(appointments.appointment_id) AS count"
+                            ).write("LEFT JOIN ")
+                            .openGroup().write(
+                                    new QueryBuilder()
+                                            .select("inventory", "camp_id", "SUM(stock) AS total_stock")
+                                            .where("expiry_date >= CURRENT_DATE")
+                                            .groupby("camp_id")
+                            ).closeGroup("inv")
+                            .write("ON inv.camp_id = camps.camp_id ")
+                            .leftJoin("appointments",
+                                    "appointments.camp_id = camps.camp_id",
+                                    "appointments.date_of_vaccination = CURRENT_DATE",
+                                    "appointments.status != ?"
+                            )
+                            .and("location LIKE ?")
+                            .groupby("camps.camp_id", "inv.total_stock")
+                            .orderby(sortBy.toString(), reverse),
+
+                    Status.CANCELLED,
+                    '%' + contains + '%'
             );
 
             try (ResultSet rs = db.executeQuery()) {
@@ -139,6 +245,10 @@ public class CampModule {
             throw new InvalidRequestException(e.getMessage());
         }
 
+    }
+
+    public static void main (String[] args) {
+//        System.out.println(Arrays.toString(getCamps("a", Column.LOCATION, true)));
     }
 
 }

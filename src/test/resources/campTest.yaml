@@ -64,6 +64,28 @@ tests:
         appointment_count:
           type: "number"
 
+  - name: "fetch camps by name"
+    method: "GET"
+    endpoint: "/camps"
+    query_params:
+      name_contains: "chennai"
+    session_attributes:
+      user_id: 2
+    expected_response:
+      status: 200
+      validate:
+        camp_id:
+          type: "number"
+        location:
+          type: "string"
+          value: "chennai"
+        start_date:
+          type: "date"
+        total_stock:
+          type: "number"
+        appointment_count:
+          type: "number"
+
   - name: "get camp appointments"
     method: "GET"
     endpoint: "/camps/2/appointments"
