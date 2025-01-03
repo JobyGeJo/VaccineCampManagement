@@ -1,7 +1,6 @@
 package org.myapplication.modules;
 
-import org.myapplication.database.DataBaseConnection;
-import org.myapplication.database.QueryBuilder;
+import org.myapplication.database.*;
 import org.myapplication.enumerate.Slot;
 import org.myapplication.enumerate.Status;
 import org.myapplication.exceptions.DataBaseException;
@@ -15,10 +14,41 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
+import java.util.Arrays;
 
 public class AppointmentModule {
+
+    public static final Table table = new Table("appointments");
+
+    enum AppointmentColumns {
+        APPOINTMENT_ID("appointment_id"),
+        USER_ID("user_id"),
+        VACCINE_ID("vaccine_id"),
+        CAMP_ID("camp_id"),
+        DATE_OF_VACCINATION("date_of_vaccination"),
+        SLOT("slot"),
+        STATUS("status"),
+        DOSAGE("dosage"),;
+
+        private final Column column;
+
+        AppointmentColumns(String columnName) {
+            this.column = new Column(columnName, table);
+        }
+
+        public Column getColumn() {
+            return column;
+        }
+
+        public Column getColumn(String alias) {
+            return Column.setAlias(column, alias);
+        }
+
+        public Column getColumn(String alias, Functions delimiter) {
+            return Column.setAliasDelimiter(column, alias, delimiter);
+        }
+    }
 
     public static int countSlotAppointments(int campId, Slot slot) {
         return countSlotAppointments(campId, slot, Date.valueOf(LocalDate.now()));
@@ -34,20 +64,20 @@ public class AppointmentModule {
 
     public static int countSlotAppointments(int campId, Slot slot, Date date ,DataBaseConnection db) throws DataBaseException {
 
-        db.setQuery(
-                new QueryBuilder()
-                        .select("appointments", "COUNT(appointment_id) as count")
-                        .where("status = ?")
-                        .or("status = ?")
-                        .where("camp_id = ?")
-                        .where("slot = ?")
-                        .where("date_of_vaccination = ?"),
+        Condition status = new Condition(Operator.IN, AppointmentColumns.STATUS.getColumn(), Constants.TBD, Constants.TBD);
+        Condition setCampId = new Condition(Operator.EQUALS, AppointmentColumns.CAMP_ID.getColumn(), Constants.TBD);
+        Condition setSlot = new Condition(Operator.EQUALS, AppointmentColumns.SLOT.getColumn(), Constants.TBD);
+        Condition setDate= new Condition(Operator.EQUALS, AppointmentColumns.DATE_OF_VACCINATION.getColumn(), Constants.TBD);
 
-                Status.PENDING,
-                Status.SUCCESS,
-                campId,
-                slot,
-                date
+        Query query = new Query(table);
+        query.addColumn(AppointmentColumns.APPOINTMENT_ID.getColumn("count", Functions.COUNT));
+        query.addConditions(status, setCampId, setSlot, setDate);
+        query.select();
+
+        db.setQuery(
+                query,
+                Status.PENDING, Status.SUCCESS,
+                campId, slot, date
         );
 
         try (ResultSet rs = db.executeQuery()) {
@@ -63,22 +93,44 @@ public class AppointmentModule {
 
     }
 
+    @Deprecated
+    public static int countAppointments(int campId, Date date) {
+        try (DataBaseConnection db = new DataBaseConnection()) {
+            return countAppointments(campId, date, db);
+        } catch (DataBaseException e) {
+            throw new InvalidRequestException(e.getMessage());
+        }
+    }
+
+    @Deprecated
     public static int countAppointments(int campId, Date date, DataBaseConnection db) throws DataBaseException {
 
-        db.setQuery(
-                new QueryBuilder()
-                        .select("appointments", "COUNT(slot) as count")
-                        .where("status != ?")
-                        .where("camp_id = ?")
-                        .where("date_of_vaccination = ?")
-                        .groupby("slot"),
+        Condition status = new Condition(Operator.NOT_EQUALS, AppointmentColumns.STATUS.getColumn(), Constants.TBD);
+        Condition setCampId = new Condition(Operator.EQUALS, AppointmentColumns.CAMP_ID.getColumn(), Constants.TBD);
+        Condition setDate= new Condition(Operator.EQUALS, AppointmentColumns.DATE_OF_VACCINATION.getColumn(), Constants.TBD);
 
+        Query query = new Query(table);
+        query.addColumn(AppointmentColumns.SLOT.getColumn("count", Functions.COUNT));
+        query.addConditions(status, setCampId, setDate);
+        query.addGroupBy(AppointmentColumns.SLOT.getColumn());
+        query.select();
+
+        db.setQuery(
+                query,
                 Status.CANCELLED,
-                campId,
-                date
+                campId, date
         );
 
-        return 0;
+        try (ResultSet rs = db.executeQuery()) {
+            if (!rs.next()) {
+                throw new InvalidRequestException("Something went wrong");
+            }
+
+            return rs.getInt("count");
+
+        } catch (SQLException e) {
+            throw new DataBaseException(e);
+        }
 
     }
 
@@ -277,17 +329,62 @@ public class AppointmentModule {
 
     public static AppointmentModel[] getCampAppointments(int campId, Date date, DataBaseConnection db) throws DataBaseException {
 
+        Table vaccines = new Table("vaccines", "v");
+        Table camps = new Table("camps", "c");
+        Table users = new Table("users");
+
+        Query query = new Query(table);
+        query.addColumns(
+                AppointmentColumns.APPOINTMENT_ID.getColumn(),
+                new Column("location", camps),
+                UserModule.UserColumns.FIRST_NAME.getColumn(),
+                UserModule.UserColumns.LAST_NAME.getColumn(),
+                UserModule.UserColumns.AADHAR_NUMBER.getColumn(),
+                AppointmentColumns.STATUS.getColumn(),
+                AppointmentColumns.SLOT.getColumn(),
+                new Column("vaccine_name", vaccines),
+                AppointmentColumns.DATE_OF_VACCINATION.getColumn()
+        );
+
+        query.addJoins(
+                new Join(
+                        vaccines,
+                        new Condition(
+                                Operator.EQUALS,
+                                AppointmentColumns.VACCINE_ID.getColumn(),
+                                new Column("vaccine_id", vaccines)
+                        )
+                ),
+
+                new Join(
+                        users,
+                        new Condition(
+                                Operator.EQUALS,
+                                AppointmentColumns.USER_ID.getColumn(),
+                                UserModule.UserColumns.USER_ID.getColumn()
+                        )
+                ),
+
+                new Join(
+                        camps,
+                        new Condition(
+                                Operator.EQUALS,
+                                AppointmentColumns.CAMP_ID.getColumn(),
+                                new Column("camp_id", camps)
+                        )
+                )
+        );
+
+        query.addConditions(
+                new Condition(Operator.EQUALS, new Column("camp_id", camps), Constants.TBD),
+                new Condition(Operator.EQUALS, AppointmentColumns.DATE_OF_VACCINATION.getColumn(), Constants.TBD),
+                new Condition(Operator.NOT_EQUALS, AppointmentColumns.STATUS.getColumn(), Constants.TBD)
+        );
+
+        query.select();
+
         db.setQuery(
-                new QueryBuilder()
-                        .select("appointments",
-                                "appointment_id", "location", "first_name", "last_name", "aadhar_number",
-                                "status", "slot", "vaccine_name", "date_of_vaccination")
-                        .join("vaccines AS v", "appointments.vaccine_id = v.vaccine_id")
-                        .join("camps AS c", "appointments.camp_id = c.camp_id")
-                        .join("users AS u", "appointments.user_id = u.user_id")
-                        .where("c.camp_id = ?")
-                        .where("date_of_vaccination = ?")
-                        .where("status != ?"),
+                query,
 
                 campId,
                 date,
@@ -405,11 +502,7 @@ public class AppointmentModule {
     }
 
     public static void main(String[] args) {
-        try {
-            getUserAppointments(1);
-        } catch (InvalidRequestException e) {
-            System.out.println(e.getMessage());
-        }
+        System.out.println(Arrays.toString(getCampAppointments(2, Date.valueOf("2024-12-19"))));
     }
 
 }

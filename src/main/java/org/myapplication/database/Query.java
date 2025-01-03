@@ -2,52 +2,104 @@ package org.myapplication.database;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 public class Query {
 
-    private final String schema;
+//    private final String schema;
     private final Table table;
     private final ArrayList<Column> columns = new ArrayList<>();
+    private final ArrayList<Condition> conditions = new ArrayList<>();
+    private final ArrayList<Column> groupBy = new ArrayList<>();
+    private final ArrayList<Join> joinConditions = new ArrayList<>();
 
-    public Query(String schema, Table table) {
-        this.schema = schema;
-        this.table = table;
-    }
+    private String query;
 
     public Query(Table table) {
-        this.schema = "safedose_v2";
         this.table = table;
     }
 
-    public void setColumn(Column column) {
+    public void addColumn(Column column) {
         columns.add(column);
     }
 
-    public void setColumns(Column ...columns) {
+    public void addColumns(Column ...columns) {
         Collections.addAll(this.columns, columns);
     }
 
-    public ArrayList<Column> getColumns() {
-        return columns;
+    public String setColumns() {
+        if (columns.isEmpty()) {
+            return Constants.ALL.toString();
+        }
+        return columns.stream().map(Column::build).collect(Collectors.joining(", "));
     }
 
-    public String select() {
-        StringBuilder query = new StringBuilder();
+    public void addCondition(Condition condition) {
+        conditions.add(condition);
+    }
 
-        query.append("SELECT ");
-        if (!columns.isEmpty()) {
-            query.append(columns.get(0).build());
-            for (int i = 1; i < columns.size(); i++) {
-                query.append(", ");
-                query.append(columns.get(i).build());
-            }
-        } else {
-            query.append("*");
+    public void addConditions(Condition ...conditions) {
+        Collections.addAll(this.conditions, conditions);
+    }
+
+    public String setConditions() {
+        if (conditions.isEmpty()) {
+            return "";
         }
-        query.append(" FROM ");
-        query.append(table.build());
+        return "WHERE " + conditions.stream().map(Condition::toString).collect(Collectors.joining(" AND "));
+    }
 
-        return query.toString();
+    public void addJoin(Join join) {
+        joinConditions.add(join);
+    }
+
+    public void addJoins(Join ...joins) {
+        Collections.addAll(this.joinConditions, joins);
+    }
+
+    public String setJoins() {
+        if (joinConditions.isEmpty()) {
+            return "";
+        }
+        return joinConditions.stream().map(Join::toString).collect(Collectors.joining(" "));
+    }
+
+    public void addGroupBy(Column column) {
+        groupBy.add(column);
+    }
+
+    public void addGroupBy(Column ...columns) {
+        Collections.addAll(this.groupBy, columns);
+    }
+
+    public String setGroupBy() {
+        if (groupBy.isEmpty()) {
+            return "";
+        }
+        return "GROUP BY " + groupBy.stream().map(Column::build).collect(Collectors.joining(", "));
+    }
+
+    public void select() {
+        this.query = String.format(
+                "SELECT %s FROM %s %s %s %s",
+                setColumns(),
+                table.build(),
+                setJoins(),
+                setConditions(),
+                setGroupBy()
+        );
+    }
+
+
+    public String getQuery() {
+        if (query == null) {
+            throw new IllegalStateException("Query has not been initialized");
+        }
+        String result = query;
+        query = null;
+        return result;
     }
 
     public static void main(String[] args) {
@@ -55,10 +107,19 @@ public class Query {
         Table table = new Table("camps", schema, "camp");
         Column campId = new Column("camp_id", table, "id");
         Column campName = new Column("location", table, "name");
+        Condition not_in = new Condition(Operator.NOT_IN, campName, "chennai", "banglore");
+        Condition between = new Condition(Operator.BETWEEN, campId, 2, 10);
+        Condition condition = new Condition(Operator.OR, not_in, between);
+
 
         Query queryMaker = new Query(table);
-        System.out.println(queryMaker.select());
-        queryMaker.setColumns(campId, campName);
-        System.out.println(queryMaker.select());
+        queryMaker.select();
+        System.out.println(queryMaker.getQuery());
+        queryMaker.addColumns(campId, campName);
+        queryMaker.select();
+        System.out.println(queryMaker.getQuery());
+        queryMaker.addCondition(condition);
+        queryMaker.select();
+        System.out.println(queryMaker.getQuery());
     }
 }

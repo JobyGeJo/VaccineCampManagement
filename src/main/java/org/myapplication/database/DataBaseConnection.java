@@ -3,7 +3,9 @@ package org.myapplication.database;
 import org.myapplication.tools.ColoredOutput;
 import org.myapplication.exceptions.DataBaseException;
 
+import java.lang.reflect.Type;
 import java.sql.*;
+import java.util.function.Function;
 
 public class DataBaseConnection implements AutoCloseable {
     private Connection conn;
@@ -86,6 +88,28 @@ public class DataBaseConnection implements AutoCloseable {
 
             //noinspection SqlSourceToSinkFlow
             stmt = conn.prepareStatement(query.build());
+
+            for (int i = 0; i < params.length; i++) {
+                if (params[i] instanceof Enum) {
+                    stmt.setObject(i + 1, params[i].toString(), Types.OTHER);
+                } else {
+                    stmt.setObject(i + 1, params[i]); // Bind other types normally
+                }
+            }
+
+        } catch (SQLException e) {
+            throw new DataBaseException(e);
+        }
+    }
+
+    public void setQuery(Query query, Object... params) throws DataBaseException {
+        try {
+            if (conn == null) {
+                throw new DataBaseException("Not connected");
+            }
+
+            //noinspection SqlSourceToSinkFlow
+            stmt = conn.prepareStatement(query.getQuery());
 
             for (int i = 0; i < params.length; i++) {
                 if (params[i] instanceof Enum) {

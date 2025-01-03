@@ -1,7 +1,6 @@
 package org.myapplication.modules;
 
-import org.myapplication.database.DataBaseConnection;
-import org.myapplication.database.QueryBuilder;
+import org.myapplication.database.*;
 import org.myapplication.enumerate.Status;
 import org.myapplication.exceptions.DataBaseException;
 import org.myapplication.exceptions.InvalidRequestException;
@@ -11,6 +10,7 @@ import java.sql.Date;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Arrays;
 
 public class InventoryModule {
 
@@ -216,10 +216,6 @@ public class InventoryModule {
         } catch (DataBaseException e) {
             throw new InvalidRequestException(e.getMessage());
         }
-    }
-
-    public static void main(String[] args) throws DataBaseException {
-        useOneVaccine(2, 1);
     }
 
 }

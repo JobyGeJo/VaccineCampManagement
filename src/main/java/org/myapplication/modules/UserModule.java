@@ -1,7 +1,6 @@
 package org.myapplication.modules;
 
-import org.myapplication.database.DataBaseConnection;
-import org.myapplication.database.QueryBuilder;
+import org.myapplication.database.*;
 import org.myapplication.enumerate.Role;
 import org.myapplication.exceptions.AuthenticationFailedException;
 import org.myapplication.exceptions.DataBaseException;
@@ -15,6 +14,39 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 
 public class UserModule {
+
+    private final static Table table = new Table("users");
+
+    enum UserColumns {
+
+        USER_ID("user_id"),
+        USERNAME("user_name"),
+        PASSWORD("password"),
+        AADHAR_NUMBER("aadhar_number"),
+        FIRST_NAME("first_name"),
+        LAST_NAME("last_name"),
+        PHONE_NUMBER("phone_number"),
+        DATE_OF_BIRTH("date_of_birth"),
+        ROLE("role");
+
+        private final Column column;
+
+        UserColumns(String column) {
+            this.column = new Column(column, table);
+        }
+
+        public Column getColumn() {
+            return column;
+        }
+
+        public Column getColumn(String alias) {
+            return Column.setAlias(column, alias);
+        }
+
+        public Column getColumn(String alias, Functions delimeter) {
+            return Column.setAliasDelimiter(column, alias, delimeter);
+        }
+    }
 
     public static void registerUser(UserModel userDetails, String password) {
         try (DataBaseConnection db = new DataBaseConnection()) {
@@ -59,15 +91,15 @@ public class UserModule {
 
     public static UserModel loginUser(String username, String password) throws DataBaseException, AuthenticationFailedException {
 
+        Condition condition = new Condition(Operator.EQUALS, UserColumns.USERNAME.getColumn(), username);
+        Query query = new Query(table);
+        query.addCondition(condition);
+        query.select();
+
         try (DataBaseConnection db = new DataBaseConnection()){
             new UserModel().setUsername(username);
 
-            db.setQuery(
-                    new QueryBuilder()
-                            .select("users", "user_id", "password")
-                            .where("user_name = ?"),
-                    username
-            );
+            db.setQuery(query);
 
             try (ResultSet rs = db.executeQuery()) {
 
@@ -97,10 +129,12 @@ public class UserModule {
 
     public static UserModel getUser(int userId, DataBaseConnection db) throws DataBaseException {
 
-        db.setQuery(
-                new QueryBuilder().select("users").where("user_id = ?"),
-                userId
-        );
+        Query query = new Query(table);
+        Condition condition = new Condition(Operator.EQUALS, UserColumns.USER_ID.getColumn(), userId);
+        query.addCondition(condition);
+        query.select();
+
+        db.setQuery(query);
 
         return getUserModel(db);
     }
@@ -133,13 +167,12 @@ public class UserModule {
     }
 
     public static UserModel fetchUser(String aadharNumber){
+        Condition condition = new Condition(Operator.EQUALS, UserColumns.AADHAR_NUMBER.getColumn(), aadharNumber);
+        Query query = new Query(table);
+        query.addCondition(condition);
+        query.select();
         try (DataBaseConnection db = new DataBaseConnection()) {
-            db.setQuery(
-                    new QueryBuilder("safedose_v2").select("users").where("aadhar_number = ?"),
-
-                    aadharNumber
-            );
-
+            db.setQuery(query);
             return getUserModel(db);
         } catch (DataBaseException e) {
             throw new InvalidRequestException(e.getMessage());
@@ -149,12 +182,14 @@ public class UserModule {
     public static UserModel[] getAdmins() {
         ArrayList<UserModel> admins = new ArrayList<>();
 
+        Condition condition = new Condition(Operator.IS_NOT_NULL, UserColumns.ROLE.getColumn());
+
+        Query query = new Query(table);
+        query.addCondition(condition);
+
         try (DataBaseConnection db = new DataBaseConnection()) {
 
-            db.setQuery(new QueryBuilder("safedose_v2")
-                    .select("users")
-                    .where("role IS NOT NULL")
-            );
+            db.setQuery(query);
 
             try (ResultSet rs = db.executeQuery()) {
 
@@ -254,15 +289,21 @@ public class UserModule {
         }
     }
 
+    public static Role getCurrentRole(int userId) throws DataBaseException {
+        try (DataBaseConnection db = new DataBaseConnection()){
+            return getCurrentRole(userId, db);
+        } catch (SQLException e) {
+            throw new DataBaseException(e);
+        }
+    }
+
     public static Role getCurrentRole(int userId, DataBaseConnection db) throws DataBaseException, SQLException {
 
-        db.setQuery(
-                new QueryBuilder()
-                        .select("users", "role")
-                        .where("user_id = ?"),
+        Query query = new Query(table);
+        query.addCondition(new Condition(Operator.EQUALS, UserColumns.ROLE.getColumn(), userId));
+        query.select();
 
-                userId
-        );
+        db.setQuery(query);
 
         ResultSet rs = db.executeQuery();
         if (rs.next()) {
@@ -359,10 +400,7 @@ public class UserModule {
     }
 
     public static void main(String[] args) throws DataBaseException, SQLException {
-        JsonModel jsonModel = new JsonModel();
-
-        jsonModel.set("date_of_birth", "1970-01-01");
-        updateUser(13, jsonModel);
+        System.out.println(getCurrentRole(1));
     }
 
 }
