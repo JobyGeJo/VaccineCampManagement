@@ -1,5 +1,7 @@
 package org.myapplication.database;
 
+import org.myapplication.modules.Module;
+
 import java.sql.Types;
 import java.util.Arrays;
 import java.util.List;
@@ -7,10 +9,18 @@ import java.util.stream.Collectors;
 
 public class Condition {
 
-    private final String condition;
+    private String condition;
 
     // Constructor for binary operations
     public Condition(Operator operator, Column self, Object ...others) {
+        condition = getCondition(operator, self, others);
+    }
+
+    public Condition(Operator operator, Module.Columns self, Object ...others) {
+        condition = getCondition(operator, self.getColumn(), others);
+    }
+
+    private String getCondition(Operator operator, Column self, Object[] others) {
         switch (operator) {
             case BETWEEN:
             case NOT_BETWEEN:
@@ -61,7 +71,7 @@ public class Condition {
                 throw new IllegalArgumentException("Illegal operator: " + operator);
 
         }
-
+        return this.condition;
     }
 
     public Condition(Operator operator, Condition ...conditions) {

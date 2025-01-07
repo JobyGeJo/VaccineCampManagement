@@ -3,8 +3,7 @@ package org.myapplication.modules;
 import jakarta.servlet.ServletOutputStream;
 import jakarta.servlet.http.HttpServletRequest;
 import org.apache.pdfbox.pdmodel.PDDocument;
-import org.myapplication.database.DataBaseConnection;
-import org.myapplication.database.QueryBuilder;
+import org.myapplication.database.*;
 import org.myapplication.enumerate.Status;
 import org.myapplication.exceptions.DataBaseException;
 import org.myapplication.exceptions.InvalidRequestException;
@@ -18,7 +17,27 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 
-public class VaccineModule {
+public class VaccineModule extends Module {
+
+    public static final Table table = new Table("vaccines", "v");
+
+    enum VaccineColumns implements Columns {
+        VACCINE_ID("vaccine_id"),
+        VACCINE_NAME("vaccine_name"),
+        BOOKED_APPOINTMENT("booked_appointments"),
+        DOSAGES("dosages");
+
+        private final Column column;
+
+        VaccineColumns(String columnName) {
+            column = new Column(columnName, table);
+        }
+
+        @Override
+        public Column getColumn() {
+            return column;
+        }
+    }
 
     public static void generateCertificate(int userId, int vaccinationId, HttpServletRequest request, ServletOutputStream outputStream) {
 
@@ -54,13 +73,12 @@ public class VaccineModule {
 
         VaccineModel vaccine = new VaccineModel();
 
-        db.setQuery(
-                new QueryBuilder()
-                        .select("vaccines", "vaccine_name", "dosages")
-                        .where("vaccine_id = ?"),
+        Query query = new Query(table);
+        query.addColumns(VaccineColumns.VACCINE_NAME, VaccineColumns.DOSAGES);
+        query.addCondition(new Condition(Operator.EQUALS, VaccineColumns.VACCINE_ID, Constants.TBD));
+        query.select();
 
-                vaccineId
-        );
+        db.setQuery(query, vaccineId);
 
         try (ResultSet rs = db.executeQuery()) {
             if (!rs.next()) {
@@ -73,15 +91,28 @@ public class VaccineModule {
 
         }
 
+        Query query2 = new Query(AppointmentModule.table);
+
+        query2.addColumns(
+                CampModule.CampColumns.CAMP_NAME,
+                AppointmentModule.AppointmentColumns.APPOINTMENT_ID,
+                AppointmentModule.AppointmentColumns.SLOT,
+                AppointmentModule.AppointmentColumns.DATE_OF_VACCINATION,
+                AppointmentModule.AppointmentColumns.STATUS
+        );
+
+        query2.addJoin(AppointmentModule.ForeignKeyJoins.CAMPS);
+
+        query2.addConditions(
+                new Condition(Operator.EQUALS, AppointmentModule.AppointmentColumns.USER_ID, Constants.TBD),
+                new Condition(Operator.EQUALS, AppointmentModule.AppointmentColumns.VACCINE_ID, Constants.TBD),
+                new Condition(Operator.EQUALS, AppointmentModule.AppointmentColumns.STATUS, Constants.TBD)
+        );
+
+        query2.select();
+
         db.setQuery(
-            new QueryBuilder()
-                .select("appointments",
-                        "location", "appointment_id", "slot",
-                        "date_of_vaccination", "status")
-                .join("camps c", "c.camp_id = appointments.camp_id")
-                .where("user_id = ?")
-                .where("vaccine_id = ?")
-                .where("status = ?"),
+            query2,
 
             userId,
             vaccineId,
@@ -134,7 +165,7 @@ public class VaccineModule {
     }
 
     public static void main(String[] args) {
-        System.out.println(getVaccineDetails(1, 1));
+        System.out.println(getVaccineDetails(4, 1));
     }
 
 }

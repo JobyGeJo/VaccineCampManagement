@@ -1,22 +1,53 @@
 package org.myapplication.modules;
 
-import org.myapplication.database.DataBaseConnection;
-import org.myapplication.database.QueryBuilder;
+import org.myapplication.database.*;
 import org.myapplication.enumerate.Slot;
 import org.myapplication.enumerate.Status;
 import org.myapplication.exceptions.DataBaseException;
 import org.myapplication.exceptions.InvalidRequestException;
 import org.myapplication.models.CampModel;
-import org.myapplication.models.VaccineModel;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.ArrayList;
 
-public class CampModule {
+public class CampModule extends Module {
+
+    public static final Table table = new Table("camps", "c");
+
+    public enum CampColumns implements Columns {
+        CAMP_ID("camp_id"),
+        CAMP_NAME("location"),
+        START_DATE("start_date"),
+        END_DATE("end_date");
+
+        private final Column column;
+
+        CampColumns(String columnName) {
+            this.column = new Column(columnName, table);
+        }
+
+        @Override
+        public Column getColumn() {
+            return column;
+        }
+    }
+
+    enum CampJoins implements Joins {
+        APPOINTMENTS(AppointmentModule.table, AppointmentModule.AppointmentColumns.CAMP_ID.getColumn(), CampColumns.CAMP_ID.getColumn());
+
+        private final Join join;
+
+        CampJoins(Table table, Column column, Column joinColumn) {
+            this.join = new Join(table, new Condition(Operator.EQUALS, column, joinColumn));
+        }
+
+        @Override
+        public Join getJoin() {
+            return join;
+        }
+    }
 
     public static void registerCamp(CampModel camp) {
         try (DataBaseConnection db = new DataBaseConnection()) {

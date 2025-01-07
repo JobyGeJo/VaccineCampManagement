@@ -9,6 +9,7 @@ import org.myapplication.models.AppointmentModel;
 import org.myapplication.models.UserModel;
 import org.myapplication.models.VaccineModel;
 
+import javax.swing.plaf.PanelUI;
 import java.sql.Date;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -17,11 +18,11 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
 
-public class AppointmentModule {
+public class AppointmentModule extends Module {
 
-    public static final Table table = new Table("appointments");
+    public static final Table table = new Table("appointments", "a");
 
-    enum AppointmentColumns {
+    public enum AppointmentColumns implements Columns {
         APPOINTMENT_ID("appointment_id"),
         USER_ID("user_id"),
         VACCINE_ID("vaccine_id"),
@@ -37,16 +38,31 @@ public class AppointmentModule {
             this.column = new Column(columnName, table);
         }
 
+        @Override
         public Column getColumn() {
             return column;
         }
 
-        public Column getColumn(String alias) {
-            return Column.setAlias(column, alias);
+        @Override
+        public String toString() {
+            return column.toString();
+        }
+    }
+
+    enum ForeignKeyJoins implements Joins {
+        USERS(UserModule.table, AppointmentColumns.USER_ID, UserModule.UserColumns.USER_ID),
+        CAMPS(CampModule.table, AppointmentColumns.CAMP_ID, CampModule.CampColumns.CAMP_ID),
+        VACCINES(VaccineModule.table, AppointmentColumns.VACCINE_ID, VaccineModule.VaccineColumns.VACCINE_ID);
+
+        private final Join join;
+
+        ForeignKeyJoins(Table table, Columns refColumn, Columns toColumn) {
+            this.join = new Join(table, new Condition(Operator.EQUALS, refColumn.getColumn(), toColumn.getColumn()));
         }
 
-        public Column getColumn(String alias, Functions delimiter) {
-            return Column.setAliasDelimiter(column, alias, delimiter);
+        @Override
+        public Join getJoin() {
+            return join;
         }
     }
 
@@ -329,54 +345,27 @@ public class AppointmentModule {
 
     public static AppointmentModel[] getCampAppointments(int campId, Date date, DataBaseConnection db) throws DataBaseException {
 
-        Table vaccines = new Table("vaccines", "v");
-        Table camps = new Table("camps", "c");
-        Table users = new Table("users");
-
         Query query = new Query(table);
         query.addColumns(
-                AppointmentColumns.APPOINTMENT_ID.getColumn(),
-                new Column("location", camps),
-                UserModule.UserColumns.FIRST_NAME.getColumn(),
-                UserModule.UserColumns.LAST_NAME.getColumn(),
-                UserModule.UserColumns.AADHAR_NUMBER.getColumn(),
-                AppointmentColumns.STATUS.getColumn(),
-                AppointmentColumns.SLOT.getColumn(),
-                new Column("vaccine_name", vaccines),
-                AppointmentColumns.DATE_OF_VACCINATION.getColumn()
+                AppointmentColumns.APPOINTMENT_ID,
+                CampModule.CampColumns.CAMP_NAME,
+                UserModule.UserColumns.FIRST_NAME,
+                UserModule.UserColumns.LAST_NAME,
+                UserModule.UserColumns.AADHAR_NUMBER,
+                AppointmentColumns.STATUS,
+                AppointmentColumns.SLOT,
+                VaccineModule.VaccineColumns.VACCINE_NAME,
+                AppointmentColumns.DATE_OF_VACCINATION
         );
 
         query.addJoins(
-                new Join(
-                        vaccines,
-                        new Condition(
-                                Operator.EQUALS,
-                                AppointmentColumns.VACCINE_ID.getColumn(),
-                                new Column("vaccine_id", vaccines)
-                        )
-                ),
-
-                new Join(
-                        users,
-                        new Condition(
-                                Operator.EQUALS,
-                                AppointmentColumns.USER_ID.getColumn(),
-                                UserModule.UserColumns.USER_ID.getColumn()
-                        )
-                ),
-
-                new Join(
-                        camps,
-                        new Condition(
-                                Operator.EQUALS,
-                                AppointmentColumns.CAMP_ID.getColumn(),
-                                new Column("camp_id", camps)
-                        )
-                )
+                ForeignKeyJoins.VACCINES,
+                ForeignKeyJoins.CAMPS,
+                ForeignKeyJoins.USERS
         );
 
         query.addConditions(
-                new Condition(Operator.EQUALS, new Column("camp_id", camps), Constants.TBD),
+                new Condition(Operator.EQUALS, CampModule.CampColumns.CAMP_ID.getColumn(), Constants.TBD),
                 new Condition(Operator.EQUALS, AppointmentColumns.DATE_OF_VACCINATION.getColumn(), Constants.TBD),
                 new Condition(Operator.NOT_EQUALS, AppointmentColumns.STATUS.getColumn(), Constants.TBD)
         );

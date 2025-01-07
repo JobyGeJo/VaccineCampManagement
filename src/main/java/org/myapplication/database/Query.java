@@ -1,9 +1,8 @@
 package org.myapplication.database;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
+import org.myapplication.modules.Module.*;
+
+import java.util.*;
 import java.util.stream.Collectors;
 
 public class Query {
@@ -21,12 +20,21 @@ public class Query {
         this.table = table;
     }
 
+
     public void addColumn(Column column) {
         columns.add(column);
     }
 
+    public void addColumn(Columns column) {
+        columns.add(column.getColumn());
+    }
+
     public void addColumns(Column ...columns) {
         Collections.addAll(this.columns, columns);
+    }
+
+    public void addColumns(Columns ...columns) {
+        Collections.addAll(this.columns, Arrays.stream(columns).map(Columns::getColumn).toArray(Column[]::new));
     }
 
     public String setColumns() {
@@ -35,6 +43,7 @@ public class Query {
         }
         return columns.stream().map(Column::build).collect(Collectors.joining(", "));
     }
+
 
     public void addCondition(Condition condition) {
         conditions.add(condition);
@@ -51,12 +60,21 @@ public class Query {
         return "WHERE " + conditions.stream().map(Condition::toString).collect(Collectors.joining(" AND "));
     }
 
+
     public void addJoin(Join join) {
         joinConditions.add(join);
     }
 
     public void addJoins(Join ...joins) {
         Collections.addAll(this.joinConditions, joins);
+    }
+
+    public void addJoin(Joins defaultJoin) {
+        joinConditions.add(defaultJoin.getJoin());
+    }
+
+    public void addJoins(Joins...defaultJoins) {
+        Collections.addAll(this.joinConditions, Arrays.stream(defaultJoins).map(Joins::getJoin).toArray(Join[]::new));
     }
 
     public String setJoins() {
@@ -99,6 +117,10 @@ public class Query {
         }
         String result = query;
         query = null;
+        columns.clear();
+        conditions.clear();
+        joinConditions.clear();
+        groupBy.clear();
         return result;
     }
 

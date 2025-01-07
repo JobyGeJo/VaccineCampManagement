@@ -13,11 +13,11 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 
-public class UserModule {
+public class UserModule extends Module {
 
-    private final static Table table = new Table("users");
+    public final static Table table = new Table("users", "u");
 
-    enum UserColumns {
+    enum UserColumns implements Columns {
 
         USER_ID("user_id"),
         USERNAME("user_name"),
